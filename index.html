@@ -206,7 +206,6 @@ footer{text-align:center;padding:20px;font-size:11px;color:var(--text3)}
         <div id="a-signals"></div>
       </div>
 
-
       <div class="card" style="margin-top:0">
         <h2>予測 BW推移グラフ</h2>
         <div style="position:relative;height:220px">
@@ -214,6 +213,7 @@ footer{text-align:center;padding:20px;font-size:11px;color:var(--text3)}
         </div>
         <p class="note" style="margin-top:6px">実線=今回予測、破線=CRM=1全体平均。エラーバーはLOO-RMSE。</p>
       </div>
+
 
       <div class="card">
         <h2>アラート閾値（CRM=1）</h2>
@@ -535,7 +535,7 @@ function calcA(){
     '7_BW': bw7, '14_BW': bw14, '21_BW': bw21,
     'CV_7': cv7, 'CV_14': cv14, 'CV_21': cv21,
     'HIS_over108_21d': his,
-    '暑熱': heat, 'season_score': season, 'YY_trend': 1.77,
+    'heat': heat, 'season_score': season, 'YY_trend': 1.77,
   }, pred);
 
   document.getElementById('a-signals').innerHTML = sigs.map(s=>
@@ -642,34 +642,29 @@ const MEANS_HEAT = {"0": 39.6, "7": 208.1, "14": 557.8, "21": 1072.4, "28": 1675
 // 早期警戒: 21日齢モデル 係数
 const AM28 = {
   intercept: 1687.5,
-  coef: {"0_BW": 0.719, "7_BW": 5.691, "14_BW": 1.738, "21_BW": 46.335, "CV_7": -3.867, "CV_14": 5.151, "CV_21": 0.031, "HIS_over108_21d": -10.969, "\u6691\u71b1": 6.935, "season_score": -8.608, "YY_trend": 4.247},
-  mu:   {"0_BW": 39.8, "7_BW": 210.0441, "14_BW": 554.5718, "21_BW": 1067.9366, "CV_7": 8.8476, "CV_14": 8.5469, "CV_21": 9.5975, "HIS_over108_21d": 2.0795, "\u6691\u71b1": 4.1705, "season_score": 1.5341, "YY_trend": 1.7727},
-  sd:   {"0_BW": 2.4372, "7_BW": 12.2426, "14_BW": 24.3472, "21_BW": 46.8165, "CV_7": 1.3651, "CV_14": 0.8943, "CV_21": 0.7478, "HIS_over108_21d": 3.9398, "\u6691\u71b1": 8.0233, "season_score": 1.8191, "YY_trend": 0.7385},
-  rmse: 45.4,
+  coef: {"0_BW": 0.7186, "7_BW": 5.6907, "14_BW": 1.7382, "21_BW": 46.3346, "CV_7": -3.867, "CV_14": 5.151, "CV_21": 0.031, "HIS_over108_21d": -10.9687, "heat": 6.9351, "season_score": -8.608, "YY_trend": 4.2469},
+  mu:   {"0_BW": 39.8, "7_BW": 210.0441, "14_BW": 554.5718, "21_BW": 1067.9366, "CV_7": 8.8476, "CV_14": 8.5469, "CV_21": 9.5975, "HIS_over108_21d": 2.0795, "heat": 4.1705, "season_score": 1.5341, "YY_trend": 1.7727},
+  sd:   {"0_BW": 2.4372, "7_BW": 12.2426, "14_BW": 24.3472, "21_BW": 46.8165, "CV_7": 1.3651, "CV_14": 0.8943, "CV_21": 0.7478, "HIS_over108_21d": 3.9398, "heat": 8.0233, "season_score": 1.8191, "YY_trend": 0.7385},
 };
 const AM35 = {
   intercept: 2340.0,
-  coef: {"0_BW": 9.5, "7_BW": -39.514, "14_BW": 31.09, "21_BW": 48.963, "CV_7": -16.759, "CV_14": 20.203, "CV_21": -11.704, "HIS_over108_21d": -3.148, "\u6691\u71b1": -16.494, "season_score": -24.517, "YY_trend": 15.788},
-  mu:   {"0_BW": 39.8, "7_BW": 210.0441, "14_BW": 554.5718, "21_BW": 1067.9366, "CV_7": 8.8476, "CV_14": 8.5469, "CV_21": 9.5975, "HIS_over108_21d": 2.0795, "\u6691\u71b1": 4.1705, "season_score": 1.5341, "YY_trend": 1.7727},
-  sd:   {"0_BW": 2.4372, "7_BW": 12.2426, "14_BW": 24.3472, "21_BW": 46.8165, "CV_7": 1.3651, "CV_14": 0.8943, "CV_21": 0.7478, "HIS_over108_21d": 3.9398, "\u6691\u71b1": 8.0233, "season_score": 1.8191, "YY_trend": 0.7385},
-  rmse: 63.9,
+  coef: {"0_BW": 9.5003, "7_BW": -39.5144, "14_BW": 31.0898, "21_BW": 48.9631, "CV_7": -16.7595, "CV_14": 20.2034, "CV_21": -11.704, "HIS_over108_21d": -3.1483, "heat": -16.4943, "season_score": -24.5172, "YY_trend": 15.7885},
+  mu:   {"0_BW": 39.8, "7_BW": 210.0441, "14_BW": 554.5718, "21_BW": 1067.9366, "CV_7": 8.8476, "CV_14": 8.5469, "CV_21": 9.5975, "HIS_over108_21d": 2.0795, "heat": 4.1705, "season_score": 1.5341, "YY_trend": 1.7727},
+  sd:   {"0_BW": 2.4372, "7_BW": 12.2426, "14_BW": 24.3472, "21_BW": 46.8165, "CV_7": 1.3651, "CV_14": 0.8943, "CV_21": 0.7478, "HIS_over108_21d": 3.9398, "heat": 8.0233, "season_score": 1.8191, "YY_trend": 0.7385},
 };
-// AM42は既存のA_COEF/A_MU/A_SDを流用
 
 // ハーブ: 14日齢モデル 係数
 const HM28 = {
   intercept: 1675.0,
-  coef: {"0_BW": -17.517, "7_BW": 29.693, "14_BW": 26.891, "CV_7": -6.617, "CV_14": 13.085, "HIS_over108_21d": -2.481, "BW14_7ratio": -10.061, "season_score": -27.521, "YY_trend": 1.411},
+  coef: {"0_BW": -17.5175, "7_BW": 29.6931, "14_BW": 26.8914, "CV_7": -6.6174, "CV_14": 13.0849, "HIS_over108_21d": -2.4807, "BW14_7ratio": -10.0612, "season_score": -27.5211, "YY_trend": 1.411},
   mu:   {"0_BW": 39.6, "7_BW": 208.1387, "14_BW": 557.8107, "CV_7": 9.0016, "CV_14": 8.5932, "HIS_over108_21d": 5.64, "BW14_7ratio": 2.6835, "season_score": 4.2, "YY_trend": 1.6},
   sd:   {"0_BW": 2.4615, "7_BW": 13.5636, "14_BW": 30.7675, "CV_7": 1.1261, "CV_14": 0.7887, "HIS_over108_21d": 5.6486, "BW14_7ratio": 0.1035, "season_score": 0.866, "YY_trend": 0.5},
-  rmse: 54.8,
 };
 const HM35 = {
   intercept: 2297.4,
-  coef: {"0_BW": -35.955, "7_BW": 34.593, "14_BW": 42.855, "CV_7": -28.099, "CV_14": 21.561, "HIS_over108_21d": -29.286, "BW14_7ratio": 11.994, "season_score": -67.678, "YY_trend": -5.746},
+  coef: {"0_BW": -35.9553, "7_BW": 34.593, "14_BW": 42.8554, "CV_7": -28.0985, "CV_14": 21.5608, "HIS_over108_21d": -29.2855, "BW14_7ratio": 11.9938, "season_score": -67.6777, "YY_trend": -5.7455},
   mu:   {"0_BW": 39.6, "7_BW": 208.1387, "14_BW": 557.8107, "CV_7": 9.0016, "CV_14": 8.5932, "HIS_over108_21d": 5.64, "BW14_7ratio": 2.6835, "season_score": 4.2, "YY_trend": 1.6},
   sd:   {"0_BW": 2.4615, "7_BW": 13.5636, "14_BW": 30.7675, "CV_7": 1.1261, "CV_14": 0.7887, "HIS_over108_21d": 5.6486, "BW14_7ratio": 0.1035, "season_score": 0.866, "YY_trend": 0.5},
-  rmse: 63.8,
 };
 
 function predictBW(model, inputs) {
@@ -810,9 +805,13 @@ function drawErrorBars(chart, pointIndices, rmses, color) {
   ctx.restore();
 }
 
-// 初期計算
-calcA();
-calcH();
+// 初期計算（Chart.js読み込み後に実行）
+if (typeof Chart !== "undefined") {
+  calcA();
+  calcH();
+} else {
+  window.addEventListener("load", function() { calcA(); calcH(); });
+}
 </script>
 </body>
 </html>
