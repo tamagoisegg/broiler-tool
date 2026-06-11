@@ -160,6 +160,11 @@ footer{text-align:center;padding:20px;font-size:11px;color:var(--text3)}
 
       <p class="section-title" style="margin-top:14px">体重・均一性</p>
       <div class="sl-row">
+        <label class="sl-lbl">孵化時 BW (g)</label>
+        <input type="range" id="a-bw0" min="35" max="50" value="40" step="0.1" oninput="sv('a-bw0','av-bw0','g',1);calcA()">
+        <span class="sl-val" id="av-bw0">40.0 g</span>
+      </div>
+      <div class="sl-row">
         <label class="sl-lbl">7日齢 BW (g)</label>
         <input type="range" id="a-bw7" min="160" max="250" value="213" step="1" oninput="sv('a-bw7','av-bw7','g');calcA()">
         <span class="sl-val" id="av-bw7">213 g</span>
@@ -199,6 +204,15 @@ footer{text-align:center;padding:20px;font-size:11px;color:var(--text3)}
 
         <h3>シグナル判定</h3>
         <div id="a-signals"></div>
+      </div>
+
+
+      <div class="card" style="margin-top:0">
+        <h2>予測 BW推移グラフ</h2>
+        <div style="position:relative;height:220px">
+          <canvas id="chart-alert"></canvas>
+        </div>
+        <p class="note" style="margin-top:6px">実線=今回予測、破線=CRM=1全体平均。エラーバーはLOO-RMSE。</p>
       </div>
 
       <div class="card">
@@ -307,6 +321,14 @@ footer{text-align:center;padding:20px;font-size:11px;color:var(--text3)}
         </div>
         <div id="h-verdict" class="verdict v-idle">予測後に実績を入力してください</div>
       </div>
+
+        <div class="card" style="margin-top:0">
+          <h2>予測 BW推移グラフ</h2>
+          <div style="position:relative;height:220px">
+            <canvas id="chart-herb"></canvas>
+          </div>
+          <p class="note" style="margin-top:6px">実線=今回予測（ハーブなし想定）、破線=暑熱期平均。エラーバーはLOO-RMSE。</p>
+        </div>
 
       <div class="card">
         <h2>判定の見方</h2>
@@ -448,6 +470,7 @@ const A_RMSE = 100;
 
 function az(k,v){return(v-A_MU[k])/A_SD[k];}
 function calcA(){
+  const bw0_a  = +document.getElementById('a-bw0').value;
   const heat   = +document.getElementById('a-heat').value;
   const season = +document.getElementById('a-season').value;
   const bw7    = +document.getElementById('a-bw7').value;
@@ -506,6 +529,15 @@ function calcA(){
       lbl: cv21<10.35?'問題なし':cv21<11.1?'要注意':'警戒',
       memo: cv21>=10.35?'均一性低下':'良好' },
   ];
+  // グラフ更新
+  updateAlertChart({
+    '0_BW': bw0_a,
+    '7_BW': bw7, '14_BW': bw14, '21_BW': bw21,
+    'CV_7': cv7, 'CV_14': cv14, 'CV_21': cv21,
+    'HIS_over108_21d': his,
+    '暑熱': heat, 'season_score': season, 'YY_trend': 1.77,
+  }, pred);
+
   document.getElementById('a-signals').innerHTML = sigs.map(s=>
     `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px">
        <span style="font-weight:600">${s.name}<br><span style="font-size:11px;color:var(--text3)">${s.memo}</span></span>
@@ -569,6 +601,15 @@ function calcH(){
 
   document.getElementById('h-actual').value = pred;
   document.getElementById('hv-actual').textContent = pred.toLocaleString() + ' g';
+  // グラフ更新
+  updateHerbChart({
+    '0_BW': bw0, '7_BW': bw7, '14_BW': bw14,
+    'CV_7': cv7, 'CV_14': cv14,
+    'HIS_over108_21d': his,
+    'BW14_7ratio': ratio,
+    'season_score': sea, 'YY_trend': yy,
+  }, pred);
+
   document.getElementById('h-verdict').textContent = '実績BW42を入力して判定';
   document.getElementById('h-verdict').className = 'verdict v-idle';
 }
@@ -589,6 +630,184 @@ function judgeH(){
     vd.textContent = `△ 要追加確認 — 差 ${diff>=0?'+':''}${diff}g（±${H_RMSE}g以内）　8棟の傾向を合わせて判断してください`;
     vd.className = 'verdict v-warn';
   }
+}
+
+
+// ════════════════════════════════
+// BW推移グラフ
+// ════════════════════════════════
+const MEANS_ALL  = {"0": 39.8, "7": 210.0, "14": 554.6, "21": 1067.9, "28": 1687.5, "35": 2340.0, "42": 2975.2};
+const MEANS_HEAT = {"0": 39.6, "7": 208.1, "14": 557.8, "21": 1072.4, "28": 1675.0, "35": 2297.4, "42": 2877.5};
+
+// 早期警戒: 21日齢モデル 係数
+const AM28 = {
+  intercept: 1687.5,
+  coef: {"0_BW": 0.719, "7_BW": 5.691, "14_BW": 1.738, "21_BW": 46.335, "CV_7": -3.867, "CV_14": 5.151, "CV_21": 0.031, "HIS_over108_21d": -10.969, "\u6691\u71b1": 6.935, "season_score": -8.608, "YY_trend": 4.247},
+  mu:   {"0_BW": 39.8, "7_BW": 210.0441, "14_BW": 554.5718, "21_BW": 1067.9366, "CV_7": 8.8476, "CV_14": 8.5469, "CV_21": 9.5975, "HIS_over108_21d": 2.0795, "\u6691\u71b1": 4.1705, "season_score": 1.5341, "YY_trend": 1.7727},
+  sd:   {"0_BW": 2.4372, "7_BW": 12.2426, "14_BW": 24.3472, "21_BW": 46.8165, "CV_7": 1.3651, "CV_14": 0.8943, "CV_21": 0.7478, "HIS_over108_21d": 3.9398, "\u6691\u71b1": 8.0233, "season_score": 1.8191, "YY_trend": 0.7385},
+  rmse: 45.4,
+};
+const AM35 = {
+  intercept: 2340.0,
+  coef: {"0_BW": 9.5, "7_BW": -39.514, "14_BW": 31.09, "21_BW": 48.963, "CV_7": -16.759, "CV_14": 20.203, "CV_21": -11.704, "HIS_over108_21d": -3.148, "\u6691\u71b1": -16.494, "season_score": -24.517, "YY_trend": 15.788},
+  mu:   {"0_BW": 39.8, "7_BW": 210.0441, "14_BW": 554.5718, "21_BW": 1067.9366, "CV_7": 8.8476, "CV_14": 8.5469, "CV_21": 9.5975, "HIS_over108_21d": 2.0795, "\u6691\u71b1": 4.1705, "season_score": 1.5341, "YY_trend": 1.7727},
+  sd:   {"0_BW": 2.4372, "7_BW": 12.2426, "14_BW": 24.3472, "21_BW": 46.8165, "CV_7": 1.3651, "CV_14": 0.8943, "CV_21": 0.7478, "HIS_over108_21d": 3.9398, "\u6691\u71b1": 8.0233, "season_score": 1.8191, "YY_trend": 0.7385},
+  rmse: 63.9,
+};
+// AM42は既存のA_COEF/A_MU/A_SDを流用
+
+// ハーブ: 14日齢モデル 係数
+const HM28 = {
+  intercept: 1675.0,
+  coef: {"0_BW": -17.517, "7_BW": 29.693, "14_BW": 26.891, "CV_7": -6.617, "CV_14": 13.085, "HIS_over108_21d": -2.481, "BW14_7ratio": -10.061, "season_score": -27.521, "YY_trend": 1.411},
+  mu:   {"0_BW": 39.6, "7_BW": 208.1387, "14_BW": 557.8107, "CV_7": 9.0016, "CV_14": 8.5932, "HIS_over108_21d": 5.64, "BW14_7ratio": 2.6835, "season_score": 4.2, "YY_trend": 1.6},
+  sd:   {"0_BW": 2.4615, "7_BW": 13.5636, "14_BW": 30.7675, "CV_7": 1.1261, "CV_14": 0.7887, "HIS_over108_21d": 5.6486, "BW14_7ratio": 0.1035, "season_score": 0.866, "YY_trend": 0.5},
+  rmse: 54.8,
+};
+const HM35 = {
+  intercept: 2297.4,
+  coef: {"0_BW": -35.955, "7_BW": 34.593, "14_BW": 42.855, "CV_7": -28.099, "CV_14": 21.561, "HIS_over108_21d": -29.286, "BW14_7ratio": 11.994, "season_score": -67.678, "YY_trend": -5.746},
+  mu:   {"0_BW": 39.6, "7_BW": 208.1387, "14_BW": 557.8107, "CV_7": 9.0016, "CV_14": 8.5932, "HIS_over108_21d": 5.64, "BW14_7ratio": 2.6835, "season_score": 4.2, "YY_trend": 1.6},
+  sd:   {"0_BW": 2.4615, "7_BW": 13.5636, "14_BW": 30.7675, "CV_7": 1.1261, "CV_14": 0.7887, "HIS_over108_21d": 5.6486, "BW14_7ratio": 0.1035, "season_score": 0.866, "YY_trend": 0.5},
+  rmse: 63.8,
+};
+
+function predictBW(model, inputs) {
+  let score = model.intercept;
+  for (const [k, c] of Object.entries(model.coef)) {
+    if (inputs[k] !== undefined && model.sd[k] > 0)
+      score += c * (inputs[k] - model.mu[k]) / model.sd[k];
+  }
+  return Math.round(score);
+}
+
+let chartAlert = null;
+let chartHerb  = null;
+
+function updateAlertChart(inputs, pred42) {
+  const pred28 = predictBW(AM28, inputs);
+  const pred35 = predictBW(AM35, inputs);
+  const days   = [0, 7, 14, 21, 28, 35, 42];
+  const predBW = [
+    inputs['0_BW'], inputs['7_BW'], inputs['14_BW'], inputs['21_BW'],
+    pred28, pred35, pred42
+  ];
+  const avgBW = days.map(d => MEANS_ALL[String(d)] || null);
+  const rmses = [0, 0, 0, 0, AM28.rmse, AM35.rmse, A_RMSE];
+
+  const ctx = document.getElementById('chart-alert');
+  if (!ctx) return;
+  if (chartAlert) chartAlert.destroy();
+  chartAlert = new Chart(ctx, {
+    data: {
+      labels: ['0日','7日','14日','21日','28日','35日','42日'],
+      datasets: [
+        {
+          type: 'line', label: '今回予測',
+          data: predBW,
+          borderColor: '#1A6FD4', backgroundColor: 'rgba(26,111,212,.08)',
+          borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: '#1A6FD4',
+          tension: 0.3, fill: false, order: 1,
+          errorBars: {
+            '28日': {plus: AM28.rmse, minus: AM28.rmse},
+            '35日': {plus: AM35.rmse, minus: AM35.rmse},
+            '42日': {plus: A_RMSE,    minus: A_RMSE},
+          }
+        },
+        {
+          type: 'line', label: 'CRM=1全体平均',
+          data: avgBW,
+          borderColor: '#8A92A0', borderDash: [5,4],
+          borderWidth: 1.5, pointRadius: 3, pointBackgroundColor: '#8A92A0',
+          tension: 0.3, fill: false, order: 2,
+        },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font: {size:11}, boxWidth:14 } } },
+      scales: {
+        x: { ticks: {font:{size:10}} },
+        y: { ticks: {font:{size:10}}, title: {display:true, text:'BW (g)', font:{size:10}} }
+      }
+    }
+  });
+
+  // エラーバーを手描き（Chart.jsの標準機能を使わずcanvas直描き）
+  setTimeout(() => drawErrorBars(chartAlert, [4,5,6], [AM28.rmse,AM35.rmse,A_RMSE], '#1A6FD4'), 50);
+}
+
+function updateHerbChart(inputs, pred42) {
+  const pred28 = predictBW(HM28, inputs);
+  const pred35 = predictBW(HM35, inputs);
+  const days   = [0, 7, 14, 21, 28, 35, 42];
+
+  // 21日以前は入力値があれば使う、なければ暑熱期平均
+  const bw21_val = MEANS_HEAT['21'];
+  const predBW = [
+    inputs['0_BW'],
+    inputs['7_BW'],
+    inputs['14_BW'],
+    bw21_val,
+    pred28, pred35, pred42
+  ];
+  const avgBW = days.map(d => MEANS_HEAT[String(d)] || null);
+
+  const ctx = document.getElementById('chart-herb');
+  if (!ctx) return;
+  if (chartHerb) chartHerb.destroy();
+  chartHerb = new Chart(ctx, {
+    data: {
+      labels: ['0日','7日','14日','21日*','28日','35日','42日'],
+      datasets: [
+        {
+          type: 'line', label: 'ハーブなし予測',
+          data: predBW,
+          borderColor: '#C47A0A', backgroundColor: 'rgba(196,122,10,.08)',
+          borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: '#C47A0A',
+          tension: 0.3, fill: false, order: 1,
+        },
+        {
+          type: 'line', label: '暑熱期平均',
+          data: avgBW,
+          borderColor: '#8A92A0', borderDash: [5,4],
+          borderWidth: 1.5, pointRadius: 3, pointBackgroundColor: '#8A92A0',
+          tension: 0.3, fill: false, order: 2,
+        },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font: {size:11}, boxWidth:14 } } },
+      scales: {
+        x: { ticks: {font:{size:10}} },
+        y: { ticks: {font:{size:10}}, title: {display:true, text:'BW (g)', font:{size:10}} }
+      }
+    }
+  });
+  setTimeout(() => drawErrorBars(chartHerb, [4,5,6], [HM28.rmse,HM35.rmse,H_RMSE], '#C47A0A'), 50);
+}
+
+function drawErrorBars(chart, pointIndices, rmses, color) {
+  const meta = chart.getDatasetMeta(0);
+  const ctx  = chart.ctx;
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  pointIndices.forEach((pi, i) => {
+    const pt = meta.data[pi];
+    if (!pt) return;
+    const yScale = chart.scales.y;
+    const yPlus  = yScale.getPixelForValue(chart.data.datasets[0].data[pi] + rmses[i]);
+    const yMinus = yScale.getPixelForValue(chart.data.datasets[0].data[pi] - rmses[i]);
+    const hw = 5;
+    ctx.beginPath();
+    ctx.moveTo(pt.x, yMinus); ctx.lineTo(pt.x, yPlus);
+    ctx.moveTo(pt.x-hw, yPlus);  ctx.lineTo(pt.x+hw, yPlus);
+    ctx.moveTo(pt.x-hw, yMinus); ctx.lineTo(pt.x+hw, yMinus);
+    ctx.stroke();
+  });
+  ctx.restore();
 }
 
 // 初期計算
