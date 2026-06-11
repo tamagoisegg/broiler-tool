@@ -211,7 +211,7 @@ footer{text-align:center;padding:20px;font-size:11px;color:var(--text3)}
         <div style="position:relative;height:220px">
           <canvas id="chart-alert"></canvas>
         </div>
-        <p class="note" style="margin-top:6px">実線=今回予測、破線=CRM=1全体平均。エラーバーはLOO-RMSE。</p>
+        <p class="note" style="margin-top:6px">実線=今回予測、破線=CRM=1全体平均（早期警戒）/ 6〜7月入雛平均（ハーブ）。エラーバーはLOO-RMSE。</p>
       </div>
 
 
@@ -327,7 +327,7 @@ footer{text-align:center;padding:20px;font-size:11px;color:var(--text3)}
           <div style="position:relative;height:220px">
             <canvas id="chart-herb"></canvas>
           </div>
-          <p class="note" style="margin-top:6px">実線=今回予測（ハーブなし想定）、破線=暑熱期平均。エラーバーはLOO-RMSE。</p>
+          <p class="note" style="margin-top:6px">実線=今回予測（ハーブなし想定）、破線=6〜7月入雛平均（n=15）。エラーバーはLOO-RMSE。</p>
         </div>
 
       <div class="card">
@@ -637,7 +637,7 @@ function judgeH(){
 // BW推移グラフ
 // ════════════════════════════════
 const MEANS_ALL  = {"0": 39.8, "7": 210.0, "14": 554.6, "21": 1067.9, "28": 1687.5, "35": 2340.0, "42": 2975.2};
-const MEANS_HEAT = {"0": 39.6, "7": 208.1, "14": 557.8, "21": 1072.4, "28": 1675.0, "35": 2297.4, "42": 2877.5};
+const MEANS_HEAT = {"0": 39.2, "7": 203.7, "14": 547.8, "21": 1043.9, "28": 1628.9, "35": 2214.8, "42": 2765.9};
 
 // 早期警戒: 21日齢モデル 係数
 const AM28 = {
@@ -758,7 +758,7 @@ function updateHerbChart(inputs, pred42) {
           tension: 0.3, fill: false, order: 1,
         },
         {
-          type: 'line', label: '暑熱期平均',
+          type: 'line', label: '6〜7月入雛平均',
           data: avgBW,
           borderColor: '#8A92A0', borderDash: [5,4],
           borderWidth: 1.5, pointRadius: 3, pointBackgroundColor: '#8A92A0',
