@@ -469,7 +469,7 @@ function calcA(){
 
   const diff = pred - A_MEAN;
   document.getElementById('a-pred').textContent = pred.toLocaleString() + ' g';
-  document.getElementById('a-diff').textContent = '全体平均比 ' + (diff>=0?'+':'') + diff + 'g';
+  document.getElementById('a-diff').textContent = '全体平均比 ' + (diff>=0?'+':'') + Math.round(diff) + 'g';
 
   const pct = Math.min(100, Math.max(0, (pred-2500)/(3300-2500)*100));
   const bar = document.getElementById('a-bar');
