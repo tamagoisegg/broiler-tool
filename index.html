@@ -533,7 +533,7 @@ function calcA(){
   updateAlertChart({
     '0_BW': bw0_a,
     '7_BW': bw7, '14_BW': bw14, '21_BW': bw21,
-    'CV_7': cv7, 'CV_14': cv14, 'CV_21': cv21,
+    'CV_7': cv14, 'CV_14': cv14, 'CV_21': cv21,
     'HIS_over108_21d': his,
     'heat': heat, 'season_score': season, 'YY_trend': 1.77,
   }, pred);
@@ -801,12 +801,16 @@ function drawErrorBars(chart, pointIndices, rmses, color) {
 }
 
 // 初期計算（Chart.js読み込み後に実行）
-if (typeof Chart !== "undefined") {
+// Chart.js読み込み完了を確認してから初期化
+function initCharts() {
+  if (typeof Chart === "undefined") {
+    setTimeout(initCharts, 50);
+    return;
+  }
   calcA();
   calcH();
-} else {
-  window.addEventListener("load", function() { calcA(); calcH(); });
 }
+initCharts();
 </script>
 </body>
 </html>
