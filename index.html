@@ -688,7 +688,7 @@ function updateAlertChart(inputs, pred42) {
     pred28, pred35, pred42
   ];
   const avgBW = days.map(d => MEANS_ALL[String(d)] || null);
-  const rmses = [0, 0, 0, 0, AM28.rmse, AM35.rmse, A_RMSE];
+  const rmses = [0, 0, 0, 0, 45, 64, A_RMSE];
 
   const ctx = document.getElementById('chart-alert');
   if (!ctx) return;
@@ -703,11 +703,6 @@ function updateAlertChart(inputs, pred42) {
           borderColor: '#1A6FD4', backgroundColor: 'rgba(26,111,212,.08)',
           borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: '#1A6FD4',
           tension: 0.3, fill: false, order: 1,
-          errorBars: {
-            '28日': {plus: AM28.rmse, minus: AM28.rmse},
-            '35日': {plus: AM35.rmse, minus: AM35.rmse},
-            '42日': {plus: A_RMSE,    minus: A_RMSE},
-          }
         },
         {
           type: 'line', label: 'CRM=1全体平均',
@@ -729,7 +724,7 @@ function updateAlertChart(inputs, pred42) {
   });
 
   // エラーバーを手描き（Chart.jsの標準機能を使わずcanvas直描き）
-  setTimeout(() => drawErrorBars(chartAlert, [4,5,6], [AM28.rmse,AM35.rmse,A_RMSE], '#1A6FD4'), 50);
+  setTimeout(() => drawErrorBars(chartAlert, [4,5,6], [45, 64, A_RMSE], '#1A6FD4'), 50);
 }
 
 function updateHerbChart(inputs, pred42) {
@@ -780,7 +775,7 @@ function updateHerbChart(inputs, pred42) {
       }
     }
   });
-  setTimeout(() => drawErrorBars(chartHerb, [4,5,6], [HM28.rmse,HM35.rmse,H_RMSE], '#C47A0A'), 50);
+  setTimeout(() => drawErrorBars(chartHerb, [4,5,6], [55, 64, H_RMSE], '#C47A0A'), 50);
 }
 
 function drawErrorBars(chart, pointIndices, rmses, color) {
